@@ -1,0 +1,49 @@
+.glowing-btn {
+  position: relative;
+  font-size: 1.0em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: none;
+  padding: 1.0rem 1.4rem;
+  border-radius: 5rem;
+  cursor: pointer;
+  background: #1a1a1a;
+  color: white;
+}
+
+.highlight-container {
+  position: absolute;
+  border-radius: inherit;
+  overflow: hidden;
+  inset: 0;
+  padding-top: 2px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: xor;
+}
+
+.highlight {
+  width: 200%;
+  background: conic-gradient(from 0deg, transparent 0 330deg, white 360deg);
+  -webkit-mask-image: linear-gradient(white 5%, transparent 20%);
+  mask-image: linear-gradient(white 5%, transparent 20%);
+  position: absolute;
+  border-radius: inherit;
+  z-index: -1;
+  top: 0;
+  left: 50%;
+  translate: -50% -10%;
+  aspect-ratio: 1;
+}
+
+.glowing-btn svg {
+  inline-size: 1.6rem;
+  overflow: visible;
+}
+
+.glowing-btn:hover {
+  background: #333333;
+}
