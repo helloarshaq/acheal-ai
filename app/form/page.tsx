@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Upload, Info } from "lucide-react"
+import { Upload, Info, AlertTriangle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import localFont from "next/font/local"
 import { motion } from "framer-motion"
@@ -512,13 +512,43 @@ function UploadStep({
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) {
+  const [error, setError] = useState<string | null>(null)
+
+  const validateAndHandleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check if the file is an image
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file (JPEG, PNG, etc.)')
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    // Check file size (limit to 5MB)
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    if (file.size > maxSize) {
+      setError('File size should be less than 5MB')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    setError(null)
+    handleFileChange(e)
+  }
+
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
       <input
         type="file"
         ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
+        onChange={validateAndHandleFile}
+        accept="image/jpeg,image/png,image/jpg,image/webp"
         className="hidden"
       />
       <button
@@ -528,6 +558,15 @@ function UploadStep({
         <Upload size={18} />
         Upload Your Picture
       </button>
+      {error && (
+        <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+          <AlertTriangle size={14} />
+          {error}
+        </p>
+      )}
+      <p className="text-sm text-gray-500">
+        Supported formats: JPEG, PNG, JPG, WEBP (max 5MB)
+      </p>
     </div>
   )
 }
