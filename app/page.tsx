@@ -65,14 +65,25 @@ export default function LandingPage() {
   }, [])
 
   useEffect(() => {
-    if (window.innerWidth <= 768) {
+    // Reset any previous viewport settings
+    const viewport = document.querySelector('meta[name="viewport"]')
+    if (viewport) {
+      viewport.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+    } else {
+      const meta = document.createElement("meta")
+      meta.name = "viewport"
+      meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      document.head.appendChild(meta)
+    }
+
+    return () => {
+      // Reset viewport on unmount
       const viewport = document.querySelector('meta[name="viewport"]')
       if (viewport) {
-        viewport.setAttribute("content", "width=device-width, initial-scale=0.85, maximum-scale=1.0, user-scalable=no")
+        viewport.setAttribute("content", "width=device-width, initial-scale=1.0")
       }
     }
   }, [])
-
   return (
     <div className={`min-h-screen bg-[#EEEBE7] ${aeonikPro.variable}`}>
       {/* Hero Section */}
@@ -128,11 +139,12 @@ export default function LandingPage() {
                   cutting-edge technology meets personalised solutions
                 </motion.p>
 
+                {/* Fix the font size for the hero heading to make it fit better */}
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="text-white text-[40px] sm:text-[50px] md:text-[60px] lg:text-[100px] font-light leading-tight font-aeonik text-balance"
+                  className="text-white text-[36px] sm:text-[45px] md:text-[55px] lg:text-[80px] font-light leading-tight font-aeonik text-balance"
                 >
                   <div className="inline-block whitespace-nowrap">
                     Unlock Your <span className="italic font-serif font-light">Beauty</span>

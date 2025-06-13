@@ -52,7 +52,7 @@ export default function FormPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Check if user is logged in and handle URL parameters
   useEffect(() => {
@@ -303,30 +303,28 @@ export default function FormPage() {
         <div className="w-full max-w-[1380px] flex flex-col md:flex-row rounded-[30px] overflow-hidden bg-white shadow-lg">
           {/* Left side - Image (hidden on mobile) */}
           <motion.div
-            className="relative hidden md:block md:w-1/2 overflow-hidden"
+            className="relative hidden md:block md:w-1/2 h-full"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}
           >
             {currentStep === "confirm" && uploadedImage ? (
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full min-h-[90vh]">
                 <Image
                   src={uploadedImage || "/placeholder.svg"}
                   alt="Uploaded face"
-                  width={812}
-                  height={938}
-                  className="object-cover rounded-[24px] border-none"
+                  fill
+                  className="object-cover"
                   priority
                 />
               </div>
             ) : (
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full min-h-[90vh]">
                 <Image
                   src="/images/form-face-new.jpeg"
                   alt="Beauty face with mask"
-                  width={812}
-                  height={938}
-                  className="object-cover rounded-[24px] border-none"
+                  fill
+                  className="object-cover"
                   priority
                 />
               </div>
@@ -364,6 +362,7 @@ export default function FormPage() {
                     handleUploadClick={handleUploadClick}
                     fileInputRef={fileInputRef}
                     handleFileChange={handleFileChange}
+                    uploadedImage={uploadedImage}
                   />
                 )}
 
@@ -372,6 +371,7 @@ export default function FormPage() {
                     onConfirm={handleSubmitForm}
                     onChangeImage={handleChangeImage}
                     isSubmitting={isSubmitting}
+                    uploadedImage={uploadedImage}
                   />
                 )}
               </div>
@@ -414,7 +414,7 @@ export default function FormPage() {
 // Welcome step
 function WelcomeStep({ onNext, isLoggedIn }: { onNext: () => void; isLoggedIn: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full">
+    <div className="flex flex-col items-center justify-center">
       <h1 className="text-3xl md:text-4xl font-light mb-4 text-center">Lets Start!</h1>
       <p className="text-[#6A6A6A] text-lg mb-12 text-center">
         Fill up a form so we can provide promising results.
@@ -437,47 +437,12 @@ function NameStep({ name, setName }: { name: string; setName: (name: string) => 
   return (
     <div>
       <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">What is your Name?</h1>
-      <p className="text-[#6A6A6A] text-base md:text-lg mb-8 md:mb-12">Please Type Your name</p>
+      <p className="text-[#6A6A6A] text-lg mb-12">Please Type Your name</p>
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Your name"
-        className="w-full bg-black text-white rounded-full px-6 py-3 focus:outline-none"
-      />
-    </div>
-  )
-}
-
-// Age step
-function AgeStep({ age, setAge }: { age: string; setAge: (age: string) => void }) {
-  const handleAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-
-    // Allow empty string for clearing the input
-    if (value === "") {
-      setAge("")
-      return
-    }
-
-    // Allow typing numbers, but validate the range
-    const numValue = Number.parseInt(value, 10)
-    if (!isNaN(numValue) && numValue >= 0) {
-      setAge(value)
-    }
-  }
-
-  return (
-    <div>
-      <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">What is your Age?</h1>
-      <p className="text-[#6A6A6A] text-base md:text-lg mb-8 md:mb-12">Please enter your age (18-100)</p>
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={age}
-        onChange={handleAgeChange}
-        placeholder="Your age"
         className="w-full bg-black text-white rounded-full px-6 py-3 focus:outline-none"
       />
     </div>
@@ -507,7 +472,7 @@ function SkinTypeStep({
           <Info size={20} />
         </button>
       </div>
-      <p className="text-[#6A6A6A] text-base md:text-lg mb-8 md:mb-12">Please Select 1 Option</p>
+      <p className="text-[#6A6A6A] text-lg mb-12">Please Select 1 Option</p>
 
       <div className="flex flex-wrap gap-4">
         <button
@@ -540,89 +505,70 @@ function SkinTypeStep({
   )
 }
 
-// Upload step
+// Upload step - Updated to show uploaded image on mobile
 function UploadStep({
   handleUploadClick,
   fileInputRef,
   handleFileChange,
+  uploadedImage,
 }: {
   handleUploadClick: () => void
-  fileInputRef: React.MutableRefObject<HTMLInputElement | null>
+  fileInputRef: React.RefObject<HTMLInputElement | null>
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  uploadedImage: string | null
 }) {
-  const [error, setError] = useState<string | null>(null)
-
-  const validateAndHandleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Check if the file is an image
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file (JPEG, PNG, etc.)')
-      // Clear the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-      return
-    }
-
-    // Check file size (limit to 5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
-    if (file.size > maxSize) {
-      setError('File size should be less than 5MB')
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-      return
-    }
-
-    setError(null)
-    handleFileChange(e)
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center space-y-6">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={validateAndHandleFile}
-        accept="image/jpeg,image/png,image/jpg,image/webp"
-        className="hidden"
-      />
+    <div>
+      <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">Upload Your Picture</h1>
+      <p className="text-[#6A6A6A] text-lg mb-6">Please Upload the picture Of your face</p>
+
+      {/* Show uploaded image on mobile if available */}
+      {uploadedImage && (
+        <div className="md:hidden mb-6 flex justify-center">
+          <div className="relative w-48 h-48 rounded-lg overflow-hidden">
+            <Image src={uploadedImage || "/placeholder.svg"} alt="Uploaded face" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
       <button
         onClick={handleUploadClick}
         className="border border-black rounded-full px-6 py-3 flex items-center gap-2 hover:bg-black hover:text-white transition-colors"
       >
         <Upload size={18} />
-        Upload Your Picture
+        {uploadedImage ? "Change Picture" : "Upload Your Picture"}
       </button>
-      {error && (
-        <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-          <AlertTriangle size={14} />
-          {error}
-        </p>
-      )}
-      <p className="text-sm text-gray-500">
-        Supported formats: JPEG, PNG, JPG, WEBP (max 5MB)
-      </p>
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
     </div>
   )
 }
 
-// Confirm step
+// Confirm step - Updated to show image on mobile
 function ConfirmStep({
   onConfirm,
   onChangeImage,
   isSubmitting,
+  uploadedImage,
 }: {
   onConfirm: () => void
   onChangeImage: () => void
   isSubmitting: boolean
+  uploadedImage: string | null
 }) {
   return (
     <div>
       <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">Are you sure about this image?</h1>
-      <div className="space-y-4 mt-8">
+
+      {/* Show uploaded image on mobile with larger size */}
+      {uploadedImage && (
+        <div className="md:hidden mb-8 flex justify-center">
+          <div className="relative w-64 h-64 rounded-lg overflow-hidden border-2 border-gray-300">
+            <Image src={uploadedImage || "/placeholder.svg"} alt="Uploaded face" fill className="object-cover" />
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4 mt-4">
         <button
           onClick={onConfirm}
           disabled={isSubmitting}
@@ -638,6 +584,41 @@ function ConfirmStep({
           NO. I want to Change This image
         </button>
       </div>
+    </div>
+  )
+}
+
+// Age step - FIXED to allow typing
+function AgeStep({ age, setAge }: { age: string; setAge: (age: string) => void }) {
+  const handleAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+
+    // Allow empty string for clearing the input
+    if (value === "") {
+      setAge("")
+      return
+    }
+
+    // Allow typing numbers, but validate the range
+    const numValue = Number.parseInt(value, 10)
+    if (!isNaN(numValue) && numValue >= 0) {
+      setAge(value)
+    }
+  }
+
+  return (
+    <div>
+      <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">What is your Age?</h1>
+      <p className="text-[#6A6A6A] text-lg mb-12">Please enter your age (18-100)</p>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={age}
+        onChange={handleAgeChange}
+        placeholder="Your age"
+        className="w-full bg-black text-white rounded-full px-6 py-3 focus:outline-none"
+      />
     </div>
   )
 }

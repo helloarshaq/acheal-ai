@@ -6,23 +6,38 @@ import Link from "next/link"
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { useRouter } from "next/navigation"
 
-const MobileMenu = () => {
+export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const router = useRouter()
   const supabase = getSupabaseClient()
 
-  /* ─── auth bookkeeping ─────────────────────────────── */
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession()
-      setIsLoggedIn(!!data.session)
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession()
+        setIsLoggedIn(!!data.session)
+      } catch (error) {
+        console.error("Error checking session:", error)
+      }
     }
-    init()
 
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange(ev => setIsLoggedIn(ev === "SIGNED_IN"))
-    return () => subscription.unsubscribe()
+    checkSession()
+
+    // Set up auth state change listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || session) {
+        setIsLoggedIn(true)
+      } else if (event === "SIGNED_OUT") {
+        setIsLoggedIn(false)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [supabase])
 
   const handleSignOut = async () => {
@@ -31,10 +46,16 @@ const MobileMenu = () => {
     router.push("/")
   }
 
-  /* ─── lock scroll when menu open ───────────────────── */
+  // Prevent body scroll when menu is open
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "auto"
-    return () => { document.body.style.overflow = "auto" }
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "auto"
+    }
+    return () => {
+      document.body.style.overflow = "auto"
+    }
   }, [isOpen])
 
   /* ──────────────────────────────────────────────────── */
@@ -125,5 +146,3 @@ const MobileMenu = () => {
     </>
   )
 }
-
-export default MobileMenu
