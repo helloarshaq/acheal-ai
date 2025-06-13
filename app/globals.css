@@ -80,7 +80,7 @@
   font-family: var(--font-aeonik-pro), sans-serif;
 }
 
-/* Glass effect with specific shadow properties */
+/* Glass effect for navbar */
 .glass-effect {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(100%);
@@ -97,25 +97,78 @@
 }
 
 /* Ensure exact 30px border radius */
-.rounded-\[30px\] {
+.rounded-30px {
   border-radius: 30px !important;
 }
 
 /* Responsive adjustments for the container height */
 @media (max-width: 768px) {
-  .h-[948px] {
+  .container-height {
     height: 80vh;
   }
 }
 
 /* Smooth transitions for opacity changes */
-p[style*="opacity"] {
+.opacity-transition {
   transition: opacity 0.5s ease-out;
 }
 
-/* Footer background styles */
-.footer-gradient {
-  background-image: url('/images/gradientBg2.png');
-  background-size: cover;
-  background-position: center;
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Slightly smaller base font size for mobile */
+  }
+
+  /* Ensure form takes full width on mobile */
+  .form-container {
+    width: 100% !important;
+    padding: 1rem !important;
+  }
+
+  /* Improve tap targets on mobile */
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Ensure proper spacing in mobile menu */
+  .mobile-menu-item {
+    padding: 0.75rem 0;
+  }
+
+  /* Ensure images don't overflow on mobile */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Animation for mobile menu */
+.menu-backdrop {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* Ensure proper text wrapping on mobile */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Fix for mobile viewport */
+@media (max-width: 768px) {
+  .mobile-scale-fix {
+    transform: scale(0.75);
+    transform-origin: top center;
+  }
 }

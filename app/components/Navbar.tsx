@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Home, Grid, Info, Radio, User, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "../lib/supabase-client"
+import { getSupabaseClient } from "@/lib/supabase-client"
+import MobileMenu from "@/app/components/MobileMenu"
 
 export default function Navbar() {
   const router = useRouter()
@@ -45,7 +46,7 @@ export default function Navbar() {
     <header className="flex items-center justify-between w-full">
       <div className="text-white text-2xl md:text-3xl font-normal font-aeonik">acheal.ai</div>
 
-      {/* Navigation menu with glass effect */}
+      {/* Navigation menu with glass effect - hidden on mobile */}
       <div className="hidden md:flex items-center">
         <div className="glass-effect rounded-full px-4 py-2 flex items-center space-x-6">
           <Link href="/" className="p-2 text-white/80 hover:text-white transition-colors">
@@ -100,10 +101,15 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Get started button */}
+      {/* Mobile menu */}
+      <div className="md:hidden">
+        <MobileMenu />
+      </div>
+
+      {/* Get started button - hidden on mobile */}
       <Link
         href={isLoggedIn ? "/form" : "/auth"}
-        className="glass-effect text-white rounded-full px-6 py-2 transition-colors hover:bg-white/30 font-aeonik"
+        className="hidden md:block glass-effect text-white rounded-full px-6 py-2 transition-colors hover:bg-white/30 font-aeonik"
       >
         Get started
       </Link>

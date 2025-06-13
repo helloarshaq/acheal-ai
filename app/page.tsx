@@ -9,7 +9,7 @@ import Footer from "./components/Footer"
 import Link from "next/link"
 import Navbar from "./components/Navbar"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Grid } from "lucide-react"
+import { Grid, Phone } from "lucide-react"
 
 // Update the font path with absolute path starting from public directory
 const aeonikPro = localFont({
@@ -64,11 +64,37 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Set viewport scale for mobile
+  useEffect(() => {
+    // Only apply on mobile devices
+    if (window.innerWidth <= 768) {
+      const viewport = document.querySelector('meta[name="viewport"]')
+      if (viewport) {
+        viewport.setAttribute("content", "width=device-width, initial-scale=0.75, maximum-scale=1.0, user-scalable=no")
+      } else {
+        const meta = document.createElement("meta")
+        meta.name = "viewport"
+        meta.content = "width=device-width, initial-scale=0.75, maximum-scale=1.0, user-scalable=no"
+        document.head.appendChild(meta)
+      }
+    }
+
+    return () => {
+      // Reset viewport on unmount
+      if (window.innerWidth <= 768) {
+        const viewport = document.querySelector('meta[name="viewport"]')
+        if (viewport) {
+          viewport.setAttribute("content", "width=device-width, initial-scale=1.0")
+        }
+      }
+    }
+  }, [])
+
   return (
     <div className={`min-h-screen bg-[#EEEBE7] ${aeonikPro.variable}`}>
       {/* Hero Section */}
       <div className="flex items-center justify-center p-4">
-        <div className="relative w-full max-w-[1380px] h-[948px] rounded-[30px] overflow-hidden">
+        <div className="relative w-full max-w-[1380px] h-[100vh] md:h-[948px] rounded-[30px] overflow-hidden">
           {/* Background image with animation */}
           <motion.div
             initial={{ height: "100vh", scale: 1.2, filter: "blur(8px)" }}
@@ -112,10 +138,10 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="text-white/90 text-lg md:text-xl mb-4 font-aeonik"
+                  className="text-white/90 text-base md:text-lg lg:text-xl mb-4 font-aeonik"
                 >
                   Discover a new era beauty and self-care where
-                  <br />
+                  <br className="hidden md:block" />
                   cutting-edge technology meets personalised solutions
                 </motion.p>
 
@@ -123,7 +149,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="text-white text-[60px] md:text-[100px] font-light leading-tight font-aeonik text-balance"
+                  className="text-white text-[40px] sm:text-[50px] md:text-[60px] lg:text-[100px] font-light leading-tight font-aeonik text-balance"
                 >
                   <div className="inline-block whitespace-nowrap">
                     Unlock Your <span className="italic font-serif font-light">Beauty</span>
@@ -131,6 +157,18 @@ export default function LandingPage() {
                   <br />
                   <span className="text-[#C9B29C]">Potential with AI</span>
                 </motion.h1>
+
+                {/* Mobile-only Get Started button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="mt-8 md:hidden"
+                >
+                  <Link href={isLoggedIn ? "/form" : "/auth"}>
+                    <Button>Get started</Button>
+                  </Link>
+                </motion.div>
               </motion.div>
             </main>
           </div>
@@ -138,7 +176,7 @@ export default function LandingPage() {
       </div>
 
       {/* About Us Section */}
-      <AboutSection opacity={opacity} aboutSectionRef={aboutSectionRef} />
+      <AboutSection opacity={opacity} aboutSectionRef={aboutSectionRef} isLoggedIn={isLoggedIn} />
 
       {/* Meet the Team Section */}
       <TeamSection />
@@ -149,20 +187,24 @@ export default function LandingPage() {
   )
 }
 
-function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSectionRef: any }) {
+function AboutSection({
+  opacity,
+  aboutSectionRef,
+  isLoggedIn,
+}: { opacity: number; aboutSectionRef: any; isLoggedIn: boolean }) {
   const words =
     "Our AI-driven Platform acne type classification and treatment recommendations just for you, ensuring that every product and routine enhances your unique radiance".split(
       " ",
     )
 
   return (
-    <div ref={aboutSectionRef} className="py-20 px-6 md:px-12 max-w-[1380px] mx-auto">
+    <div ref={aboutSectionRef} className="py-12 md:py-20 px-6 md:px-12 max-w-[1380px] mx-auto">
       {/* Heading */}
-      <h2 className="text-[#6A6A6A] text-3xl md:text-4xl font-light mb-6 font-aeonik">About us</h2>
+      <h2 className="text-[#6A6A6A] text-2xl md:text-3xl lg:text-4xl font-light mb-6 font-aeonik">About us</h2>
 
       {/* Paragraph animated word by word */}
       <motion.p
-        className="text-[#693709] text-3xl md:text-5xl lg:text-6xl font-light leading-tight font-aeonik max-w-4xl mb-12 flex flex-wrap"
+        className="text-[#693709] text-2xl md:text-4xl lg:text-6xl font-light leading-tight font-aeonik max-w-4xl mb-12 flex flex-wrap"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.5 }}
@@ -190,11 +232,11 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
       </Link>
 
       {/* Bento Grid Section */}
-      <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="mt-12 md:mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* Effortless Skin Perfection */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 flex flex-col justify-between">
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 flex flex-col justify-between">
           <div className="w-12 h-12 rounded-full border-2 border-[#F8D0D0]"></div>
-          <h3 className="text-[#C9B29C] text-3xl font-light mt-auto">
+          <h3 className="text-[#C9B29C] text-2xl md:text-3xl font-light mt-auto">
             Effortless
             <br />
             Skin
@@ -204,15 +246,15 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
         </div>
 
         {/* Your Best Skincare Solution */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 md:col-span-2 flex flex-col items-center">
-          <h2 className="text-[#693709] text-4xl md:text-5xl font-medium mb-6 text-center">
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 md:col-span-2 flex flex-col items-center">
+          <h2 className="text-[#693709] text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-center">
             Your Best
             <br />
             Skincare
             <br />
             Solution
           </h2>
-          <div className="relative w-48 h-48 mt-4">
+          <div className="relative w-36 h-36 md:w-48 md:h-48 mt-4">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Ellipse-BqYK9s7IfmEJTNTAwEw2vRFX0Ut9ll.png"
               alt="Acheal logo"
@@ -223,8 +265,8 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
         </div>
 
         {/* 12K happy users */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8">
-          <h2 className="text-[#F9A26C] text-5xl font-medium mb-2">12K</h2>
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8">
+          <h2 className="text-[#F9A26C] text-4xl md:text-5xl font-medium mb-2">12K</h2>
           <p className="text-[#A89B8C] mb-6">happy users</p>
           <div className="flex -space-x-3">
             <div className="w-12 h-12 rounded-full bg-[#F9A26C] border-2 border-white"></div>
@@ -235,30 +277,32 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
           </div>
         </div>
 
-        {/* Generate Button */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 flex items-center justify-center">
-          <button className="border-2 border-[#693709] text-[#693709] rounded-full px-6 py-3 flex items-center gap-2 hover:bg-[#693709] hover:text-white transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-camera"
-            >
-              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-              <circle cx="12" cy="13" r="3" />
-            </svg>
-            Generate
-          </button>
+        {/* Generate Button - Now links to form page */}
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 flex items-center justify-center">
+          <Link href={isLoggedIn ? "/form" : "/auth"}>
+            <button className="border-2 border-[#693709] text-[#693709] rounded-full px-6 py-3 flex items-center gap-2 hover:bg-[#693709] hover:text-white transition-colors">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-camera"
+              >
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+              Generate
+            </button>
+          </Link>
         </div>
 
         {/* Branching paths */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 flex flex-col justify-between">
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 flex flex-col justify-between">
           <div className="flex items-center">
             <div className="w-8 h-8 rounded-full bg-[#8B1D1D] flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -274,7 +318,7 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
         </div>
 
         {/* 25M created Data */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 flex flex-col justify-between">
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div className="w-16 h-8 bg-gray-300 rounded-full flex items-center">
               <div className="w-8 h-8 rounded-full bg-[#F9A26C] flex items-center justify-center text-white">
@@ -283,7 +327,7 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
             </div>
           </div>
           <div className="mt-auto">
-            <h2 className="text-[#C9B29C] text-5xl font-medium mb-2">25M</h2>
+            <h2 className="text-[#C9B29C] text-4xl md:text-5xl font-medium mb-2">25M</h2>
             <div className="bg-[#E8D7D1] rounded-md px-3 py-1 inline-flex items-center">
               <span className="text-[#693709] text-sm">created Data</span>
             </div>
@@ -291,7 +335,7 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
         </div>
 
         {/* Easy-to-use interface */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 md:col-span-2 flex flex-col justify-between">
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 md:col-span-2 flex flex-col justify-between">
           <div className="flex items-center">
             <div className="h-px w-24 bg-gray-300 relative">
               <div className="absolute top-0 left-1/4 h-3 w-3 bg-[#F9A26C] rounded-full transform -translate-y-1/2"></div>
@@ -304,8 +348,8 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
           </div>
         </div>
 
-        {/* File formats */}
-        <div className="bg-[#F8F3EE] rounded-3xl p-8 flex flex-col justify-between">
+        {/* File formats and Request Call button */}
+        <div className="bg-[#F8F3EE] rounded-3xl p-6 md:p-8 flex flex-col justify-between">
           <div className="flex flex-wrap gap-2">
             <div className="bg-[#E8D7D1] rounded-full px-4 py-1 text-sm text-[#693709]">14 days trial</div>
             <div className="bg-[#F9A26C] rounded-full w-8 h-8 flex items-center justify-center text-white">
@@ -394,6 +438,15 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
                 Completed
               </span>
             </div>
+
+            {/* Request a call button */}
+            <a
+              href="tel:+923174037003"
+              className="mt-4 w-full bg-[#693709] text-white rounded-full px-4 py-2 flex items-center justify-center gap-2 hover:bg-[#8B4D1D] transition-colors"
+            >
+              <Phone size={16} />
+              Request a call
+            </a>
           </div>
         </div>
       </div>
@@ -413,15 +466,15 @@ function AboutSection({ opacity, aboutSectionRef }: { opacity: number; aboutSect
 
 function TeamSection() {
   return (
-    <div className="py-20 px-6 md:px-12 max-w-[1380px] mx-auto">
+    <div className="py-12 md:py-20 px-6 md:px-12 max-w-[1380px] mx-auto">
       {/* Section heading */}
-      <h3 className="text-[#6A6A6A] text-3xl font-light mb-4 font-aeonik">Meet the Team</h3>
-      <h2 className="text-black text-4xl md:text-5xl lg:text-6xl font-light leading-tight font-aeonik max-w-4xl mb-16">
+      <h3 className="text-[#6A6A6A] text-2xl md:text-3xl font-light mb-4 font-aeonik">Meet the Team</h3>
+      <h2 className="text-black text-3xl md:text-4xl lg:text-6xl font-light leading-tight font-aeonik max-w-4xl mb-8 md:mb-16">
         Great Product Starts with Great People. Meet our visionaries for this project
       </h2>
 
       {/* Team members grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Team Member 1 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
