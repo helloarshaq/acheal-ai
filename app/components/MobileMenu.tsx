@@ -12,28 +12,17 @@ const MobileMenu = () => {
   const router = useRouter()
   const supabase = getSupabaseClient()
 
+  /* ─── auth bookkeeping ─────────────────────────────── */
   useEffect(() => {
-    const checkSession = async () => {
+    const init = async () => {
       const { data } = await supabase.auth.getSession()
       setIsLoggedIn(!!data.session)
     }
+    init()
 
-    checkSession()
-
-    // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        setIsLoggedIn(true)
-      } else if (event === "SIGNED_OUT") {
-        setIsLoggedIn(false)
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange(ev => setIsLoggedIn(ev === "SIGNED_IN"))
+    return () => subscription.unsubscribe()
   }, [supabase])
 
   const handleSignOut = async () => {
@@ -42,44 +31,46 @@ const MobileMenu = () => {
     router.push("/")
   }
 
-  // Prevent body scroll when menu is open
+  /* ─── lock scroll when menu open ───────────────────── */
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = "auto"
-    }
-    return () => {
-      document.body.style.overflow = "auto"
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "auto"
+    return () => { document.body.style.overflow = "auto" }
   }, [isOpen])
 
+  /* ──────────────────────────────────────────────────── */
   return (
     <>
-      {/* Hamburger/Cross button with animation */}
+      {/* two-bar burger / cross */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden flex flex-col justify-center items-center gap-1.5 p-2 z-50 relative"
         aria-label={isOpen ? "Close menu" : "Open menu"}
+        className="md:hidden relative w-8 h-8 p-2 z-50"
       >
+        {/* top bar */}
         <motion.span
-          animate={isOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
+          initial={false}
+          animate={
+            isOpen
+              ? { rotate: 50, top: "50%", y: "-50%" }
+              : { rotate: 0,   top: "35%" }
+          }
           transition={{ duration: 0.3 }}
-          className="w-6 h-0.5 bg-white rounded-full origin-center"
-        ></motion.span>
+          className="absolute left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-full"
+        />
+        {/* bottom bar */}
         <motion.span
-          animate={isOpen ? { opacity: 0, scale: 0 } : { opacity: 1, scale: 1 }}
+          initial={false}
+          animate={
+            isOpen
+              ? { rotate: -50, top: "50%", y: "-50%" }
+              : { rotate: 0,    top: "65%" }
+          }
           transition={{ duration: 0.3 }}
-          className="w-6 h-0.5 bg-white rounded-full"
-        ></motion.span>
-        <motion.span
-          animate={isOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-6 h-0.5 bg-white rounded-full origin-center"
-        ></motion.span>
+          className="absolute left-1/2 -translate-x-1/2 w-6 h-0.5 bg-white rounded-full"
+        />
       </button>
 
-      {/* Animated menu overlay with frosty blur effect */}
+      {/* frosted overlay menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -90,8 +81,8 @@ const MobileMenu = () => {
             className="fixed inset-0 z-40 backdrop-blur-xl bg-black/60"
           >
             <div className="flex flex-col h-full p-8 text-white">
-              {/* Menu items */}
               <div className="flex flex-col items-start gap-8 mt-24 text-4xl font-light">
+
                 {isLoggedIn && (
                   <Link
                     href="/dashboard"
@@ -119,7 +110,11 @@ const MobileMenu = () => {
                   </Link>
                 )}
 
-                <Link href="/form" onClick={() => setIsOpen(false)} className="hover:text-[#C9B29C] transition-colors">
+                <Link
+                  href="/form"
+                  onClick={() => setIsOpen(false)}
+                  className="hover:text-[#C9B29C] transition-colors"
+                >
                   Get started
                 </Link>
               </div>

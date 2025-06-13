@@ -64,32 +64,6 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Set viewport scale for mobile
-  useEffect(() => {
-    // Only apply on mobile devices
-    if (window.innerWidth <= 768) {
-      const viewport = document.querySelector('meta[name="viewport"]')
-      if (viewport) {
-        viewport.setAttribute("content", "width=device-width, initial-scale=0.75, maximum-scale=1.0, user-scalable=no")
-      } else {
-        const meta = document.createElement("meta")
-        meta.name = "viewport"
-        meta.content = "width=device-width, initial-scale=0.75, maximum-scale=1.0, user-scalable=no"
-        document.head.appendChild(meta)
-      }
-    }
-
-    return () => {
-      // Reset viewport on unmount
-      if (window.innerWidth <= 768) {
-        const viewport = document.querySelector('meta[name="viewport"]')
-        if (viewport) {
-          viewport.setAttribute("content", "width=device-width, initial-scale=1.0")
-        }
-      }
-    }
-  }, [])
-
   return (
     <div className={`min-h-screen bg-[#EEEBE7] ${aeonikPro.variable}`}>
       {/* Hero Section */}
