@@ -88,6 +88,19 @@ export default function FormPage() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage("Please upload only image files (JPEG, PNG, GIF, etc.)")
+        return
+      }
+
+      // Check file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+      if (file.size > maxSize) {
+        setErrorMessage("Image size should be less than 5MB")
+        return
+      }
+
       try {
         // Show loading state
         setImageUploadedMessage("Processing image...")
@@ -518,7 +531,14 @@ function UploadStep({
   uploadedImage: string | null
 }) {
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/png,image/gif,image/webp,image/jpg"
+        className="hidden"
+      />
       <h1 className="text-2xl md:text-3xl lg:text-4xl font-light mb-4">Upload Your Picture</h1>
       <p className="text-[#6A6A6A] text-lg mb-6">Please Upload the picture Of your face</p>
 
@@ -538,7 +558,6 @@ function UploadStep({
         <Upload size={18} />
         {uploadedImage ? "Change Picture" : "Upload Your Picture"}
       </button>
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
     </div>
   )
 }
