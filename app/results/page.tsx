@@ -72,7 +72,7 @@ export default function ResultsPage() {
   const [severity, setSeverity] = useState<string | null>(null)
   const [severityNum, setSeverityNum] = useState<number>(0)
   const [roboflowPrediction, setRoboflowPrediction] = useState<string | null>(null)
-  const [acne8mPrediction, setAcne8mPrediction] = useState<string | null>(null)
+  const [acne9mPrediction, setacne9mPrediction] = useState<string | null>(null)
   const [geminiPrediction, setGeminiPrediction] = useState<string | null>(null)
   const [apiErrors, setApiErrors] = useState<any>(null)
   const [showNoAcneModal, setShowNoAcneModal] = useState(false)
@@ -145,7 +145,7 @@ export default function ResultsPage() {
 
       // Store all predictions and severity
       setRoboflowPrediction(data.roboflowPrediction || null)
-      setAcne8mPrediction(data.acne8mPrediction || null)
+      setacne9mPrediction(data.acne9mPrediction || null)
       setGeminiPrediction(data.geminiPrediction || null)
       setSeverity(data.severity || null)
       setSeverityNum(data.severityNum || 0)
@@ -448,7 +448,7 @@ export default function ResultsPage() {
                 <h3 className="text-lg font-medium mb-2">AI Analysis</h3>
                 <div className="space-y-1 text-sm text-gray-600">
                   {roboflowPrediction && <p>Roboflow: {roboflowPrediction}</p>}
-                  {acne8mPrediction && <p>Acne-8M: {acne8mPrediction}</p>}
+                  {acne9mPrediction && <p>Acne-8M: {acne9mPrediction}</p>}
                   {geminiPrediction ? (
                     <p>Gemini: {geminiPrediction}</p>
                   ) : (

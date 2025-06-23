@@ -1,3 +1,7 @@
+/* --------------------------------------------------------------------------
+   /app/api/predict/route.ts
+   Next.js (App Router) server action – runs on Node
+--------------------------------------------------------------------------- */
 import { NextResponse } from "next/server";
 import {
   GoogleGenAI,
@@ -5,71 +9,71 @@ import {
   createPartFromUri,
 } from "@google/genai";
 
-/* run in Node (Buffer, File) and never prerender */
+/* run only on server + disable prerender */
 export const runtime  = "nodejs";
 export const dynamic  = "force-dynamic";
-
 export async function POST(request: Request) {
   try {
     const { imageData } = await request.json();
     if (!imageData)
       return NextResponse.json({ error: "Image data is required" }, { status: 400 });
 
-    /* base-64 → File */
+    /* base-64 → File ------------------------------------------------------ */
     const base64Data = imageData.split(",")[1] || imageData;
     const binaryData = Buffer.from(base64Data, "base64");
-    const blob = new Blob([binaryData], { type: "image/jpeg" });
-    const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+    const blob       = new Blob([binaryData], { type: "image/jpeg" });
+    const file       = new File([blob], "image.jpg", { type: "image/jpeg" });
 
-    /* call 4 APIs in parallel */
-    const [roboflowResult, acne8mResult, geminiResult, asgmResult] =
+    /* call 4 APIs in parallel -------------------------------------------- */
+    const [roboflowResult, acne9mResult, geminiResult, asgmResult] =
       await Promise.allSettled([
         getPredictionFromRoboflow(imageData),
-        callAcne8m(file),
+        callAcne9m(file),                       // 🔄 NEW
         getPredictionFromGemini(imageData),
         callASGM(file),
       ]);
 
-    const typeRF  = roboflowResult.status === "fulfilled" ? roboflowResult.value : "Unknown";
-    const typeA8M = acne8mResult .status === "fulfilled" ? acne8mResult .value : "Unknown";
-    const typeGMN = geminiResult .status === "fulfilled" ? geminiResult .value : "Unknown";
+    const typeRF   = roboflowResult.status === "fulfilled" ? roboflowResult.value : "Unknown";
+    const typeA9M  = acne9mResult .status === "fulfilled" ? acne9mResult .value : "Unknown";
+    const typeGMN  = geminiResult .status === "fulfilled" ? geminiResult .value : "Unknown";
     const severityNum = asgmResult.status === "fulfilled" ? asgmResult.value  : 0;
 
-    console.log("API results:", { typeRF, typeA8M, typeGMN, severityNum });
+    console.log("API results:", { typeRF, typeA9M, typeGMN, severityNum });
 
-    /* no-acne heuristics */
+    /* heuristics ‒ detect “no acne” scenarios ----------------------------- */
     const geminiTimedOut =
       geminiResult.status === "rejected" &&
       /(timeout|Timeout)/i.test((geminiResult.reason as Error)?.message ?? "");
 
     if (
       typeGMN.toLowerCase().includes("no acne") ||
-      (geminiTimedOut && typeA8M === "Unknown") ||
-      (typeRF === "Unknown" && typeA8M === "Unknown" && typeGMN === "Unknown")
+      (geminiTimedOut && typeA9M === "Unknown") ||
+      (typeRF === "Unknown" && typeA9M === "Unknown" && typeGMN === "Unknown")
     )
       return NextResponse.json({ error: "NO_ACNE" }, { status: 422 });
 
-    /* majority / priority */
+    /* majority / priority merge ------------------------------------------ */
     let finalType = "Acne";
     const agree = (a: string, b: string) => a === b && a !== "Unknown";
 
-    if (agree(typeRF, typeA8M))               finalType = typeRF;
-    else if (agree(typeRF, typeGMN))          finalType = typeRF;
-    else if (agree(typeA8M, typeGMN))         finalType = typeA8M;
-    else if (!geminiTimedOut && typeGMN !== "Unknown") finalType = typeGMN;
-    else if (typeA8M !== "Unknown")                      finalType = typeA8M;
-    else if (typeRF  !== "Unknown")                      finalType = typeRF;
+    if      (agree(typeRF,  typeA9M))                      finalType = typeRF;
+    else if (agree(typeRF,  typeGMN))                      finalType = typeRF;
+    else if (agree(typeA9M, typeGMN))                      finalType = typeA9M;
+    else if (!geminiTimedOut && typeGMN !== "Unknown")     finalType = typeGMN;
+    else if (typeA9M !== "Unknown")                        finalType = typeA9M;
+    else if (typeRF  !== "Unknown")                        finalType = typeRF;
 
+    /* respond ------------------------------------------------------------- */
     return NextResponse.json({
       prediction         : formatPrediction(finalType),
       severity           : getSeverityLabel(severityNum),
       severityNum        : severityNum,
       roboflowPrediction : formatPrediction(typeRF),
-      acne8mPrediction   : formatPrediction(typeA8M),
+      acne9mPrediction   : formatPrediction(typeA9M),     // 🔄 new key
       geminiPrediction   : formatPrediction(typeGMN),
       apiErrors: {
         roboflow : roboflowResult.status === "rejected" ? (roboflowResult.reason as Error).message : null,
-        acne8m   : acne8mResult .status === "rejected" ? (acne8mResult .reason as Error).message : null,
+        acne9m   : acne9mResult .status === "rejected" ? (acne9mResult .reason as Error).message : null,
         gemini   : geminiResult .status === "rejected" ? (geminiResult .reason as Error).message : null,
         asgm     : asgmResult   .status === "rejected" ? (asgmResult   .reason as Error).message : null,
       },
@@ -83,44 +87,38 @@ export async function POST(request: Request) {
   }
 }
 
-/* ───── Acne-8M ───── */
-async function callAcne8m(file: File): Promise<string> {
+/* ───────────────── Acne-9M (Hugging Face Space) ──────────────────────── */
+async function callAcne9m(file: File): Promise<string> {
   const form = new FormData();
-  form.append("image", file);
+  form.append("file", file);                  // FastAPI expects 'file'
 
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 40000);
+  const id = setTimeout(() => controller.abort(), 40_000);
 
   try {
-    const res = await fetch("https://acne10.aiotlab.io.vn/upload_image", {
-      method: "POST",
-      body  : form,
-      signal: controller.signal,
-    });
+    const res = await fetch(
+      "https://designarshaq-acne9m.hf.space/predict",
+      { method: "POST", body: form, signal: controller.signal },
+    );
     clearTimeout(id);
 
-    if (!res.ok) throw new Error(`Acne-8M HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Acne-9M HTTP ${res.status}`);
 
-    const { bounding_boxes } = await res.json() as {
-      bounding_boxes: { class_id: string; percentage_conf: string }[];
-    };
-    if (!bounding_boxes?.length) return "Unknown";
-    return bounding_boxes.sort(
-      (a, b) => Number(b.percentage_conf) - Number(a.percentage_conf),
-    )[0]?.class_id ?? "Unknown";
+    const { label } = await res.json() as { label: string; confidence: number };
+    return label || "Unknown";
   } catch (err: any) {
-    if (err.name === "AbortError") console.log("Acne-8M timed out");
+    if (err.name === "AbortError") console.log("Acne-9M timed out");
     throw err;
   }
 }
 
-/* ───── ASGM grade ───── */
+/* ───────────────── ASGM severity grade (unchanged) ───────────────────── */
 async function callASGM(file: File): Promise<number> {
   const form = new FormData();
   form.append("file", file);
 
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 40000);
+  const id = setTimeout(() => controller.abort(), 40_000);
 
   try {
     const res = await fetch(
@@ -138,14 +136,14 @@ async function callASGM(file: File): Promise<number> {
   }
 }
 
-/* ───── Roboflow ───── */
+/* ───────────────── Roboflow (unchanged) ──────────────────────────────── */
 async function getPredictionFromRoboflow(imageData: string): Promise<string> {
   try {
     const apiUrl = "https://serverless.roboflow.com/acne-detection-g5vvz/1";
     const apiKey = "szLKaXVpFdMfJ8CE5sR8";
 
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 40000);
+    const id = setTimeout(() => controller.abort(), 40_000);
 
     const res = await fetch(`${apiUrl}?api_key=${apiKey}`, {
       method : "POST",
@@ -175,7 +173,7 @@ async function getPredictionFromRoboflow(imageData: string): Promise<string> {
   }
 }
 
-/* ───── Gemini ───── */
+/* ───────────────── Gemini (unchanged) ────────────────────────────────── */
 async function getPredictionFromGemini(imageData: string): Promise<string> {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! });
@@ -187,12 +185,11 @@ async function getPredictionFromGemini(imageData: string): Promise<string> {
 
     /* upload */
     const upCtrl = new AbortController();
-    const upId   = setTimeout(() => upCtrl.abort(), 40000);
+    const upId   = setTimeout(() => upCtrl.abort(), 40_000);
 
     const myfile = await ai.files.upload({
       file,
       config: { mimeType: "image/jpeg" },
-      // SDK still works w/out signal, but AbortController is only for fetch
     });
     clearTimeout(upId);
 
@@ -205,7 +202,7 @@ VALID TYPES: Blackhead, Conglobata, Crystalline, Cystic, Flat_wart, Folliculitis
 If you detect NO visible acne, or the picture is not a human face, reply exactly: no acne`;
 
     const genCtrl = new AbortController();
-    const genId   = setTimeout(() => genCtrl.abort(), 40000);
+    const genId   = setTimeout(() => genCtrl.abort(), 40_000);
 
     const resp = await ai.models.generateContent({
       model   : "gemini-1.5-flash",
@@ -222,11 +219,12 @@ If you detect NO visible acne, or the picture is not a human face, reply exactly
   }
 }
 
-/* ───── utilities ───── */
+/* ───────────────── Utilities ─────────────────────────────────────────── */
 function getSeverityLabel(n: number) {
   const labels = ["Clear / Normal", "Mild", "Moderate", "Severe"];
   return labels[n] ?? "Unknown";
 }
+
 function formatPrediction(prediction: string) {
   return prediction
     ? prediction
