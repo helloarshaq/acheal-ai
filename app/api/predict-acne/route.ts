@@ -140,7 +140,7 @@ async function callASGM(file: File): Promise<number> {
 async function getPredictionFromRoboflow(imageData: string): Promise<string> {
   try {
     const apiUrl = "https://serverless.roboflow.com/acne-detection-g5vvz/1";
-    const apiKey = "szLKaXVpFdMfJ8CE5sR8";
+    const apiKey = "W2SUV2BibakZNfJ8NwzP";
 
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 40_000);
@@ -195,7 +195,7 @@ async function getPredictionFromGemini(imageData: string): Promise<string> {
 
     /* prompt */
     const prompt = `You are an acne-classification expert.
-TASK: Return ONE WORD ONLY – the acne type that best matches the face in this image.
+TASK: Return ONE WORD ONLY – the acne type that is in the face in this image.
 VALID TYPES: Blackhead, Conglobata, Crystalline, Cystic, Flat_wart, Folliculitis,
              Keloid, Milium, Papular, Purulent, Scars, Sebo-crystan-conglo,
              Syringoma, Whitehead
@@ -205,7 +205,7 @@ If you detect NO visible acne, or the picture is not a human face, reply exactly
     const genId   = setTimeout(() => genCtrl.abort(), 40_000);
 
     const resp = await ai.models.generateContent({
-      model   : "gemini-1.5-flash",
+      model   : "gemini-2.5-flash",
       contents: createUserContent([
         createPartFromUri(myfile.uri!, myfile.mimeType!), prompt,
       ]),
